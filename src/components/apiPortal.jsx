@@ -4,6 +4,7 @@ import {useState , useEffect} from 'react'
 import { toast } from 'react-toastify';
 import { useDispatch, useSelector } from 'react-redux';
 import { resetState } from '../reduxStore';
+import { getPlanName } from './utils';
 
 export const ApiPortal = ()=> {
 
@@ -14,24 +15,12 @@ export const ApiPortal = ()=> {
 
     async function submitReq() {
         let res = await hook.mutateAsync()
-        console.log(res,"resss");
         if (res?.data){
             setapiResponse(prev => [...prev,res.data])
             dispatch(resetState({"quota_left": res?.quota_left}))
         }
     }
-    function getPlanName(plan_id) {
-        if (plan_id==1){
-         return 'Basic'
-        }
-        else if (plan_id ==2){
-         return 'Advanced'
-        }
-        else{
-         return ''
-        }
-     }
-    console.log(apiResponse,"res");
+
 
     return (
         <div className="m-2">

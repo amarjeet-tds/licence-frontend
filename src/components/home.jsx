@@ -4,6 +4,7 @@ import { toast } from "react-toastify"
 import { useOutletContext } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
 import { resetState } from "../reduxStore"
+import { activatePlan, getPlanName } from "./utils"
 
 
 export const Home = () => {
@@ -16,42 +17,26 @@ export const Home = () => {
     const Locker = useSelector(state => state.locker)
     const dispatch = useDispatch()
     const [matrix, setmatrix] = useState(null)
+
     useEffect(() => {
         if (hook.fetchStatus == 'idle' && hook.status == 'success') {
-            let res = hook.data
-            console.log(res);
-            if (res?.message) {
-                toast.success(res.message)
-            }
-            if (res?.data) {
-                setavailablePlans([...res.data])
+            if (hook.data?.data) {
+                setavailablePlans([...hook.data.data])
             }
         }
     }, [hook.status, hook.fetchStatus])
 
+
     useEffect(() => {
+        let resetMatrix = null
         if (user_dashboard_hook.fetchStatus == 'idle' && user_dashboard_hook.status == 'success') {
             let res = user_dashboard_hook.data
-            console.log(res, "dashboard");
-            if (res?.data) {
-                setmatrix(res.data)
-            }
-            else {
-                setmatrix(null)
-            }
-        
+            resetMatrix = res?.data ? res.data : null
         }
-        else{
-            setmatrix(null)
-        }
+        setmatrix(resetMatrix)
     }, [user_dashboard_hook.status, user_dashboard_hook.fetchStatus])
 
 
-
-    function refillQuota() {
-        refill_quota_hook.mutate()
-
-    }
     useEffect(() => {
         if (refill_quota_hook.status == 'success') {
             toast.success(refill_quota_hook.data?.message)
@@ -60,13 +45,6 @@ export const Home = () => {
     }, [refill_quota_hook.status])
 
 
-    function activatePlan(plan_id) {
-        let body = {
-            user_name: Locker['user_name'],
-            plan_id: plan_id
-        }
-        activate_plan_hook.mutate(body)
-    }
     useEffect(() => {
         if (activate_plan_hook.status == 'success') {
             let res = activate_plan_hook.data
@@ -79,26 +57,15 @@ export const Home = () => {
         }
     }, [activate_plan_hook.status])
 
+    
     useEffect(() => {
         user_dashboard_hook.refetch()
 
     }, [Locker.jwt_token])
 
-    function getPlanName(plan_id) {
-       if (plan_id==1){
-        return 'Basic'
-       }
-       else if (plan_id ==2){
-        return 'Advanced'
-       }
-       else{
-        return ''
-       }
-    }
-    
 
 
-    console.log(matrix, "ma");
+
 
 
     return (
@@ -112,8 +79,8 @@ export const Home = () => {
                             <div className="font-bold font-mono text-2xl">{plan.name}</div>
                             <div className="font-light text-sm">(Quota of {plan.quota} requests)</div>
                             <div className="flex justify-around mt-6">
-                                <button disabled={!isActive} onClick={() => refillQuota()} className="disabled:bg-gray-200 border-[1px] w-28 rounder-sm shadow-sm hover:shadow-md disabled:hover:shadow-none">Refil Quota</button>
-                                <button onClick={() => activatePlan(plan.id)} className={`${isActive ? 'bg-green-600 text-white' : ''} border-[1px] w-28 rounder-sm shadow-sm hover:shadow-md `}>{isActive ? 'Activated plan' : 'Activate Plan'}</button>
+                                <button disabled={!isActive} onClick={() => refill_quota_hook.mutate()} className="disabled:bg-gray-200 border-[1px] w-28 rounder-sm shadow-sm hover:shadow-md disabled:hover:shadow-none">Refil Quota</button>
+                                <button onClick={() => activatePlan(activate_plan_hook,plan.id, Locker['user_name'])} className={`${isActive ? 'bg-green-600 text-white' : ''} border-[1px] w-28 rounder-sm shadow-sm hover:shadow-md `}>{isActive ? 'Activated plan' : 'Activate Plan'}</button>
                             </div>
                         </div>
                     )

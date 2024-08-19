@@ -1,7 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { createSlice } from '@reduxjs/toolkit'
-import { persistStore, persistReducer } from 'redux-persist';
-import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web
+import { persistStore, persistReducer,  FLUSH,
+    REHYDRATE,
+    PAUSE,
+    PERSIST,
+    PURGE,
+    REGISTER, } from 'redux-persist';
+import storage from 'redux-persist/lib/storage';
 
 const initialState = {
     user_name: "",
@@ -23,9 +28,8 @@ const storeSlice = createSlice({
     },
 })
 const persistConfig = {
-    key: 'root', // key is required
-    storage, // storage is required
-    // Add any reducer-specific settings or whitelist/blacklist reducers here if needed
+    key: 'root',
+    storage,
 };
   
 const persistedReducer = persistReducer(persistConfig, storeSlice.reducer);
@@ -34,16 +38,16 @@ const store = configureStore({
     reducer: {
         locker : persistedReducer
     },
+    middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+      },
+    }),
 })
-// Create the store with the persisted reducer
 
-// Create a persistor, which is used to persist the store
 const persistor = persistStore(store);
   
 export { store, persistor }
-
-
-
-
 
 export const { resetState } = storeSlice.actions
