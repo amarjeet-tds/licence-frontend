@@ -1,27 +1,72 @@
 import { useEffect, useState } from "react";
 import { NavLink, Link, Outlet } from "react-router-dom";
+import { useActivatePlan } from "./apis";
+import { useDispatch, useSelector } from "react-redux";
+import { resetState } from "../reduxStore";
 
 export const Navigation = () => {
-    const [userName , setuserName]= useState(()=> {
-        if (localStorage.getItem("user_name") ==null){
-            localStorage.setItem("user_name", "")
-        }
-        return localStorage.getItem("user_name")
-    })
+    const Locker = useSelector(state => state.locker)
+    const dispatch = useDispatch()
+    const [userName , setuserName]= useState(Locker["user_name"])
     const [UserChanged,setUserChanged] = useState(false)
-
+    const hook = useActivatePlan()
 
     function addNewUser(newname) {
         setuserName(newname)
     }
     function handleSaveUser() {
-        localStorage.setItem("user_name", userName)
+     
         setUserChanged(false)
+
+        if (userName ==""){
+            let newState = {
+                user_name: "",
+                quota_left : null,
+                jwt_token: null,
+                active_plan_id: null
+            }
+            dispatch(resetState(newState))
+        }
+        else{
+            let newState = {
+                user_name: userName,
+                
+            }
+            dispatch(resetState(newState))
+            let body = {
+                user_name: userName,
+                plan_id:Locker["plan_id"]
+            }
+            hook.mutate(body)
+        }
         
     }
     useEffect(()=> {
-        setUserChanged(userName !== localStorage.getItem("user_name"))
+        setUserChanged(userName !== Locker["user_name"])
     },[userName])
+
+    useEffect(()=> {
+        if (hook.status =='success'){
+            let res = hook.data
+            let newState = {
+                jwt_token : res['jwt_token'],
+                active_plan_id: res['plan_id'],
+                quota_left: res['quota_left']
+            }
+            dispatch(resetState(newState))
+        }
+    },[hook.status])
+
+    useEffect(() => {
+        if (userName !==""){
+            let body = {
+                user_name: userName,
+                plan_id:Locker["plan_id"]
+            }
+            hook.mutate(body)
+        }
+    }, [])
+    
 
     return (
         <div className="flex grow h-full overflow-hidden">
@@ -43,7 +88,7 @@ export const Navigation = () => {
 
             </div>
             <div className="h-full  grow ">
-                <Outlet />
+                <Outlet/>
             </div>
 
         </div>
